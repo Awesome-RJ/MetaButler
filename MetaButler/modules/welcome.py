@@ -26,7 +26,7 @@ from MetaButler.modules.helper_funcs.string_handling import (
     markdown_parser,
 )
 from MetaButler.modules.log_channel import loggable
-from MetaButler.modules.sql.antispam_sql import is_user_gbanned
+from MetaButler.modules.sql.global_bans_sql import is_user_gbanned
 from telegram import (
     ChatPermissions,
     InlineKeyboardButton,
