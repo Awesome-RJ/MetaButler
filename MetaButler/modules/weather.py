@@ -117,13 +117,12 @@ def weather(update: Update, context: CallbackContext):
                 return temp[0]
 
             def sun(unix):
-                xx = (
+                return (
                     datetime.fromtimestamp(unix, tz=ctimezone)
                     .strftime("%H:%M")
                     .lstrip("0")
                     .replace(" 0", " ")
                 )
-                return xx
 
             msg = f"*{cityname}, {fullc_n}*\n"
             msg += f"`Longitude: {longitude}`\n"

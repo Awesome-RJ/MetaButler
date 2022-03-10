@@ -45,31 +45,6 @@ def inlinequery(update: Update, _) -> None:
     user = update.effective_user
 
     results: List = []
-    inline_help_dicts = [
-        {
-            "title": "SpamProtection INFO",
-            "description": "Look up a person/bot/channel/chat on @Intellivoid SpamProtection API",
-            "message_text": "Click the button below to look up a person/bot/channel/chat on @Intellivoid SpamProtection API using "
-                            "username or telegram id",
-            "thumb_urL": "https://telegra.ph/file/888b20d2f85e53d692ebd.jpg",
-            "keyboard": ".spb ",
-        },
-        {
-            "title": "Account info on MetaButler",
-            "description": "Look up a Telegram account in MetaButler database",
-            "message_text": "Click the button below to look up a person in MetaButler database using their Telegram ID",
-            "thumb_urL": "https://telegra.ph/file/888b20d2f85e53d692ebd.jpg",
-            "keyboard": ".info ",
-        },
-        {
-            "title": "About",
-            "description": "Know about MetaButler",
-            "message_text": "Click the button below to get to know about MetaButler.",
-            "thumb_urL": "https://telegra.ph/file/888b20d2f85e53d692ebd.jpg",
-            "keyboard": ".about ",
-        },
-    ]
-
     inline_funcs = {
         ".spb": spb,
         ".info": inlineinfo,
@@ -79,6 +54,31 @@ def inlinequery(update: Update, _) -> None:
     if (f := query.split(" ", 1)[0]) in inline_funcs:
         inline_funcs[f](remove_prefix(query, f).strip(), update, user)
     else:
+        inline_help_dicts = [
+            {
+                "title": "SpamProtection INFO",
+                "description": "Look up a person/bot/channel/chat on @Intellivoid SpamProtection API",
+                "message_text": "Click the button below to look up a person/bot/channel/chat on @Intellivoid SpamProtection API using "
+                                "username or telegram id",
+                "thumb_urL": "https://telegra.ph/file/888b20d2f85e53d692ebd.jpg",
+                "keyboard": ".spb ",
+            },
+            {
+                "title": "Account info on MetaButler",
+                "description": "Look up a Telegram account in MetaButler database",
+                "message_text": "Click the button below to look up a person in MetaButler database using their Telegram ID",
+                "thumb_urL": "https://telegra.ph/file/888b20d2f85e53d692ebd.jpg",
+                "keyboard": ".info ",
+            },
+            {
+                "title": "About",
+                "description": "Know about MetaButler",
+                "message_text": "Click the button below to get to know about MetaButler.",
+                "thumb_urL": "https://telegra.ph/file/888b20d2f85e53d692ebd.jpg",
+                "keyboard": ".about ",
+            },
+        ]
+
         for ihelp in inline_help_dicts:
             results.append(
                 article(
@@ -139,8 +139,7 @@ def inlineinfo(query: str, update: Update, context: CallbackContext) -> None:
     text += f"\n• Permanent user link: {mention_html(user.id, 'link')}"
 
     try:
-        spamwtc = sw.get_ban(int(user.id))
-        if spamwtc:
+        if spamwtc := sw.get_ban(int(user.id)):
             text += "<b>\n\n• SpamWatched:\n</b> Yes"
             text += f"\n• Reason: <pre>{spamwtc.reason}</pre>"
             text += "\n• Appeal at @SpamWatchSupport"
@@ -163,7 +162,7 @@ def inlineinfo(query: str, update: Update, context: CallbackContext) -> None:
             hamp = status.get("results").get("spam_prediction").get("ham_prediction")
             blc = status.get("results").get("attributes").get("is_blacklisted")
             blres = status.get("results").get("attributes").get("blacklist_reason")
-            
+
             text += "\n\n<b>SpamProtection:</b>"
             # text += f"<b>\n• Private Telegram ID:</b> <code>{ptid}</code>\n"
             text += f"<b>\n• Operator:</b> <code>{op}</code>\n"
@@ -190,17 +189,16 @@ def inlineinfo(query: str, update: Update, context: CallbackContext) -> None:
         [
             [
                 InlineKeyboardButton(
-                    text="Report Error",
-                    url=f"https://t.me/MetaButler",
+                    text="Report Error", url="https://t.me/MetaButler"
                 ),
                 InlineKeyboardButton(
                     text="Search again",
                     switch_inline_query_current_chat=".info ",
                 ),
-
-            ],
+            ]
         ]
-        )
+    )
+
 
     results = [
         InlineQueryResultArticle(
@@ -230,14 +228,11 @@ def about(query: str, update: Update, context: CallbackContext) -> None:
         [
             [
                 InlineKeyboardButton(
-                    text="Support",
-                    url=f"https://t.me/MetaButler",
+                    text="Support", url="https://t.me/MetaButler"
                 ),
                 InlineKeyboardButton(
-                    text="Channel",
-                    url=f"https://t.me/metabutlernews",
+                    text="Channel", url="https://t.me/metabutlernews"
                 ),
-
             ],
             [
                 InlineKeyboardButton(
@@ -245,7 +240,9 @@ def about(query: str, update: Update, context: CallbackContext) -> None:
                     url="https://www.github.com/DESTROYER-32/MetaButler",
                 ),
             ],
-        ])
+        ]
+    )
+
 
     results.append(
 
@@ -276,35 +273,31 @@ def spb(query: str, update: Update, context: CallbackContext) -> None:
         except IndexError:
             search = user_id
 
-        if search:
-            srdata = search
-        else:
-            srdata = user_id
-
+        srdata = search or user_id
         url = f"https://api.intellivoid.net/spamprotection/v1/lookup?query={srdata}"
         r = requests.get(url)
         a = r.json()
         response = a["success"]
         if response is True:
             date = a["results"]["last_updated"]
-            stats = f"*◢ Intellivoid• SpamProtection Info*:\n"
+            stats = "*◢ Intellivoid• SpamProtection Info*:\\n"
             stats += f' • *Updated on*: `{datetime.fromtimestamp(date).strftime("%Y-%m-%d %I:%M:%S %p")}`\n'
 
             if a["results"]["attributes"]["is_potential_spammer"] is True:
-                stats += f" • *User*: `USERxSPAM`\n"
+                stats += " • *User*: `USERxSPAM`\\n"
             elif a["results"]["attributes"]["is_operator"] is True:
-                stats += f" • *User*: `USERxOPERATOR`\n"
+                stats += " • *User*: `USERxOPERATOR`\\n"
             elif a["results"]["attributes"]["is_agent"] is True:
-                stats += f" • *User*: `USERxAGENT`\n"
+                stats += " • *User*: `USERxAGENT`\\n"
             elif a["results"]["attributes"]["is_whitelisted"] is True:
-                stats += f" • *User*: `USERxWHITELISTED`\n"
+                stats += " • *User*: `USERxWHITELISTED`\\n"
 
             stats += f' • *Type*: `{a["results"]["entity_type"]}`\n'
             stats += (
                 f' • *Language*: `{a["results"]["language_prediction"]["language"]}`\n'
             )
             stats += f' • *Language Probability*: `{a["results"]["language_prediction"]["probability"]}`\n'
-            stats += f"*Spam Prediction*:\n"
+            stats += "*Spam Prediction*:\\n"
             stats += f' • *Ham Prediction*: `{a["results"]["spam_prediction"]["ham_prediction"]}`\n'
             stats += f' • *Spam Prediction*: `{a["results"]["spam_prediction"]["spam_prediction"]}`\n'
             stats += f'*Blacklisted*: `{a["results"]["attributes"]["is_blacklisted"]}`\n'
@@ -322,16 +315,16 @@ def spb(query: str, update: Update, context: CallbackContext) -> None:
         [
             [
                 InlineKeyboardButton(
-                    text="Report Error",
-                    url=f"https://t.me/MetaButler",
+                    text="Report Error", url="https://t.me/MetaButler"
                 ),
                 InlineKeyboardButton(
                     text="Search again",
                     switch_inline_query_current_chat=".spb ",
                 ),
+            ]
+        ]
+    )
 
-            ],
-        ])
 
     a = "the entity was not found"
     results = [

@@ -80,12 +80,10 @@ class MetaINIT:
             return None
         else:
             try:
-                sw = spamwatch.Client(spamwatch_api)
-                return sw
+                return spamwatch.Client(spamwatch_api)
             except:
-                sw = None
                 log.warning("Can't connect to SpamWatch!")
-                return sw
+                return None
 
 
 MInit = MetaINIT(parser=metaconfig)
@@ -141,9 +139,7 @@ if CUSTOM_CMD and len(CUSTOM_CMD) >= 1:
 
 
 def spamfilters(text, user_id, chat_id):
-    # print("{} | {} | {}".format(text, user_id, chat_id))
-    if int(user_id) in SPAMMERS:
-        print("This user is a spammer!")
-        return True
-    else:
+    if int(user_id) not in SPAMMERS:
         return False
+    print("This user is a spammer!")
+    return True

@@ -3,6 +3,7 @@
 2020-12-29
 '''
 
+
 import importlib
 import re, ast
 from typing import Optional
@@ -55,7 +56,7 @@ for module_name in ALL_MODULES:
     if not hasattr(imported_module, "__mod_name__"):
         imported_module.__mod_name__ = imported_module.__name__
 
-    if not imported_module.__mod_name__.lower() in IMPORTED:
+    if imported_module.__mod_name__.lower() not in IMPORTED:
         IMPORTED[imported_module.__mod_name__.lower()] = imported_module
     else:
         raise Exception("Can't have two modules with the same name! Please change one")
@@ -134,7 +135,7 @@ def start(update: Update, context: CallbackContext):
     args = context.args
 
     if hasattr(update, 'callback_query'):
-        query = update.callback_query 
+        query = update.callback_query
         if hasattr(query, 'id'):
             first_name = update.effective_user.first_name
             update.effective_message.edit_text(
@@ -149,7 +150,7 @@ def start(update: Update, context: CallbackContext):
                         [
                             InlineKeyboardButton(
                                 text=gs(chat.id, "support_chat_link_btn"),
-                                url=f"https://t.me/MetaButler",
+                                url="https://t.me/MetaButler",
                             ),
                             InlineKeyboardButton(
                                 text=gs(chat.id, "updates_channel_link_btn"),
@@ -159,30 +160,27 @@ def start(update: Update, context: CallbackContext):
                                 text=gs(chat.id, "src_btn"),
                                 url="https://github.com/DESTROYER-32/MetaButler",
                             ),
-                            
                         ],
-
                         [
-
-                             InlineKeyboardButton(
-                                 text="Try inline",
-                                 switch_inline_query_current_chat="",
-                             ),
-                             InlineKeyboardButton(
+                            InlineKeyboardButton(
+                                text="Try inline",
+                                switch_inline_query_current_chat="",
+                            ),
+                            InlineKeyboardButton(
                                 text="Help",
                                 callback_data="help_back",
-                                ),
+                            ),
                             InlineKeyboardButton(
                                 text=gs(chat.id, "add_bot_to_group_btn"),
                                 url="t.me/{}?startgroup=true".format(
                                     context.bot.username
                                 ),
                             ),
-                        ]
-                        
+                        ],
                     ]
                 ),
             )
+
             context.bot.answer_callback_query(query.id)
             return
 
@@ -218,7 +216,7 @@ def start(update: Update, context: CallbackContext):
                         [
                             InlineKeyboardButton(
                                 text=gs(chat.id, "support_chat_link_btn"),
-                                url=f"https://t.me/MetaButler",
+                                url="https://t.me/MetaButler",
                             ),
                             InlineKeyboardButton(
                                 text=gs(chat.id, "updates_channel_link_btn"),
@@ -228,33 +226,30 @@ def start(update: Update, context: CallbackContext):
                                 text=gs(chat.id, "src_btn"),
                                 url="https://github.com/DESTROYER-32/MetaButler",
                             ),
-                            
                         ],
-
                         [
-
-                             InlineKeyboardButton(
-                                 text="Try inline",
-                                 switch_inline_query_current_chat="",
-                             ),
-                             InlineKeyboardButton(
+                            InlineKeyboardButton(
+                                text="Try inline",
+                                switch_inline_query_current_chat="",
+                            ),
+                            InlineKeyboardButton(
                                 text="Help",
                                 callback_data="help_back",
-                                ),
+                            ),
                             InlineKeyboardButton(
                                 text=gs(chat.id, "add_bot_to_group_btn"),
                                 url="t.me/{}?startgroup=true".format(
                                     context.bot.username
                                 ),
                             ),
-                        ]
-                        
+                        ],
                     ]
                 ),
             )
+
     else:
         update.effective_message.reply_text(gs(chat.id, "grp_start_text"))
-    
+
     if hasattr(update, 'callback_query'):
         query = update.callback_query 
         if hasattr(query, 'id'):
@@ -272,12 +267,9 @@ def error_callback(update, context):
 
     try:
         raise context.error
-    except Unauthorized:
+    except (Unauthorized, BadRequest):
         pass
         # remove update.message.chat_id from conversation list
-    except BadRequest:
-        pass
-        # handle malformed requests - read more below!
     except TimedOut:
         pass
         # handle slow connection problems
@@ -451,25 +443,24 @@ def send_settings(chat_id, user_id, user=False):
                 parse_mode=ParseMode.MARKDOWN,
             )
 
+    elif CHAT_SETTINGS:
+        chat_name = dispatcher.bot.getChat(chat_id).title
+        dispatcher.bot.send_message(
+            user_id,
+            text="Which module would you like to check {}'s settings for?".format(
+                chat_name
+            ),
+            reply_markup=InlineKeyboardMarkup(
+                paginate_modules(0, CHAT_SETTINGS, "stngs", chat=chat_id)
+            ),
+        )
     else:
-        if CHAT_SETTINGS:
-            chat_name = dispatcher.bot.getChat(chat_id).title
-            dispatcher.bot.send_message(
-                user_id,
-                text="Which module would you like to check {}'s settings for?".format(
-                    chat_name
-                ),
-                reply_markup=InlineKeyboardMarkup(
-                    paginate_modules(0, CHAT_SETTINGS, "stngs", chat=chat_id)
-                ),
-            )
-        else:
-            dispatcher.bot.send_message(
-                user_id,
-                "Seems like there aren't any chat settings available :'(\nSend this "
-                "in a group chat you're admin in to find its current settings!",
-                parse_mode=ParseMode.MARKDOWN,
-            )
+        dispatcher.bot.send_message(
+            user_id,
+            "Seems like there aren't any chat settings available :'(\nSend this "
+            "in a group chat you're admin in to find its current settings!",
+            parse_mode=ParseMode.MARKDOWN,
+        )
 
 @metacallback(pattern=r"stngs_")
 def settings_button(update: Update, context: CallbackContext):
@@ -554,13 +545,11 @@ def settings_button(update: Update, context: CallbackContext):
         bot.answer_callback_query(query.id)
         query.message.delete()
     except BadRequest as excp:
-        if excp.message == "Message is not modified":
-            pass
-        elif excp.message == "Query_id_invalid":
-            pass
-        elif excp.message == "Message can't be deleted":
-            pass
-        else:
+        if excp.message not in [
+            "Message is not modified",
+            "Query_id_invalid",
+            "Message can't be deleted",
+        ]:
             log.exception("Exception in settings buttons. %s", str(query.data))
 
 @metacmd(command='settings')
@@ -577,29 +566,28 @@ def get_settings(update: Update, context: CallbackContext):
     msg = update.effective_message  # type: Optional[Message]
 
     # ONLY send settings in PM
-    if chat.type != chat.PRIVATE:
-        if is_user_admin(chat, user.id):
-            text = "Click here to get this chat's settings, as well as yours."
-            msg.reply_text(
-                text,
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                text="Settings",
-                                url="t.me/{}?start=stngs_{}".format(
-                                    context.bot.username, chat.id
-                                ),
-                            )
-                        ]
-                    ]
-                ),
-            )
-        else:
-            text = "Click here to check your settings."
-
-    else:
+    if chat.type == chat.PRIVATE:
         send_settings(chat.id, user.id, True)
+
+    elif is_user_admin(chat, user.id):
+        text = "Click here to get this chat's settings, as well as yours."
+        msg.reply_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            text="Settings",
+                            url="t.me/{}?start=stngs_{}".format(
+                                context.bot.username, chat.id
+                            ),
+                        )
+                    ]
+                ]
+            ),
+        )
+    else:
+        text = "Click here to check your settings."
 
 @metacmd(command='donate')
 def donate(update: Update, context: CallbackContext):
@@ -658,13 +646,13 @@ def main():
         MetaINIT.bot_username = dispatcher.bot.username
         MetaINIT.bot_name = dispatcher.bot.first_name
         updater.start_polling(timeout=15, read_latency=4, drop_pending_updates=True)
-    if len(argv) not in (1, 3, 4):
-        telethn.disconnect()
-    else:
+    if len(argv) in {1, 3, 4}:
         telethn.run_until_disconnected()
+    else:
+        telethn.disconnect()
     updater.idle()
 
 if __name__ == "__main__":
-    log.info("[META] Successfully loaded modules: " + str(ALL_MODULES))
+    log.info(f"[META] Successfully loaded modules: {str(ALL_MODULES)}")
     telethn.start(bot_token=TOKEN)
     main()

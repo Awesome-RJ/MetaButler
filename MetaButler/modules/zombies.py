@@ -7,7 +7,7 @@ from MetaButler.modules.helper_funcs.telethn.chatstatus import user_is_admin
 from MetaButler.modules.helper_funcs.misc import delete
 
 
-@MetaButlerTelethonClient.on(events.NewMessage(pattern=f"^[!/]zombies ?(.*)"))
+@MetaButlerTelethonClient.on(events.NewMessage(pattern="^[!/]zombies ?(.*)"))
 async def zombies(event):
     chat = await event.get_chat()
     chat_id = event.chat_id
@@ -38,7 +38,7 @@ async def zombies(event):
                     delmsg = await msg.edit("No deleted accounts found. Group is clean")
                 else:
                     delmsg = await msg.edit(f"Found **{count}** zombies in this group\nClean them by using - `/zombies clean`")
-        
+
         elif arg == "clean":
             msg = "**Cleaning zombies...**\n"
             msg = await event.reply(msg)
@@ -51,14 +51,12 @@ async def zombies(event):
                 delmsg = await msg.edit("No deleted accounts found. Group is clean")
             else:
                 delmsg = await msg.edit(f"Cleaned `{count}` zombies")
-      
+
         else:
             delmsg = await event.reply("Wrong parameter. You can use only `/zombies clean`")
 
 
-    cleartime = get_clearcmd(chat_id, "zombies")
-
-    if cleartime:
+    if cleartime := get_clearcmd(chat_id, "zombies"):
         await sleep(cleartime.time)
         await delmsg.delete()
 
